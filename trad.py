@@ -199,7 +199,7 @@ def openXML(filePath, progress = 0):
             doc = xmltodict.parse(fd.read())
             progress = 0
     masterKey = list(doc.keys())[0]
-    if (len(filePath.split('/')) > 3):
+    if (len(filePath.split('/')) > 4):
         if not os.path.exists(DataSetRootTrad+'/'+list(filePath.split('/'))[-2]):
             os.mkdir(DataSetRootTrad+'/'+list(filePath.split('/'))[-2])
         displayOriginal(doc, fileName, progress)   
