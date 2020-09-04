@@ -1,1 +1,1 @@
-{"sourceLang": "en", "targetLang": "fr", "DataSetRoot": "./DataSet_Full DataSet", "Browser": "/usr/bin/chromium-browser", "Driver": "/usr/bin/chromedriver", "translators": {"bing": true, "google": true, "deepl": true}}
+{"sourceLang": "en", "targetLang": "fr", "DataSetRoot": "./dataset/DataSet_Full DataSet", "Browser": "/usr/bin/chromium-browser", "Driver": "/usr/bin/chromedriver", "translators": {"bing": true, "google": true, "deepl": false}}

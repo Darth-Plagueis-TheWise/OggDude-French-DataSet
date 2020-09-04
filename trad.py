@@ -3,7 +3,6 @@ import json
 import translators as ts
 import re
 import glob
-import curses
 import os
 import PySimpleGUI as sg
 
@@ -40,11 +39,11 @@ def setup():
     if type(settings) is dict:
         val=settings
     lang = ['DE', 'EN', 'FR', 'ES', 'PT', 'IT', 'NL', 'PL', 'RU', 'JA', 'ZH']
-    layout = [[sg.Text('DataSet', font=('Raleway', 14), justification='center', auto_size_text=True)],
+    layout = [[sg.Text('DataSet', font=('Raleway', 12), justification='center', auto_size_text=True)],
               [sg.HorizontalSeparator(pad=(0,(0,10)))],
               [sg.Text('DataSet Folder', font=('Raleway', 11)),sg.Input(val['DataSetRoot'],key='DataSetRoot'), sg.FolderBrowse(target='DataSetRoot')],
               [sg.Text('Source Language', font=('Raleway', 11)),sg.Combo(lang,default_value=val['sourceLang'].upper(), size=(10, 10), key='sourceLang'),sg.Text('Target Language', font=('Raleway', 11)),sg.Combo(lang,default_value=val['targetLang'].upper(), size=(10, 10), key='targetLang')],
-              [sg.Text('Translators', font=('Raleway', 14), justification='center', auto_size_text=True,pad=(0,(20,0)))],
+              [sg.Text('Translators', font=('Raleway', 12), justification='center', auto_size_text=True,pad=(0,(20,0)))],
               [sg.HorizontalSeparator(pad=(0,(0,10)))],
               [sg.Checkbox('Google Translate', default=val['translators']['google'], key='google', font=('Raleway', 11))],
               [sg.Checkbox('Bing Translate', default=val['translators']['bing'], key='bing', font=('Raleway', 11))],
@@ -66,7 +65,7 @@ def setup():
             'Browser': values['Browser'],
             'Driver': values['Driver'],
             'translators':{'bing':values['bing'],'google':values['google'],'deepl':values['deepl']}}
-            with open('settings.json', 'w') as f:
+            with open('settings.json', 'w', encoding="utf-8") as f:
                 json.dump(ini, f)
             f.close()
             break
@@ -74,7 +73,7 @@ def setup():
     main()
 
 def loadGlossary(targetLang):
-    with open('glossary.json') as json_file:
+    with open('glossary.json', encoding="utf-8") as json_file:
         load = json.load(json_file)
     if targetLang in load:
         return load[targetLang]
@@ -85,7 +84,7 @@ def loadGlossary(targetLang):
         return load['en']
 
 def editGlossary(targetLang):
-    with open('glossary.json') as json_file:
+    with open('glossary.json', encoding="utf-8") as json_file:
         load = json.load(json_file)
         total = len(load['en'])
         if targetLang not in load:
@@ -108,7 +107,7 @@ def editGlossary(targetLang):
                 break  
             if event in ('Save'):
                 load[targetLang]=values
-                print(json.dumps(load), file=open('glossary.json', 'w'))
+                print(json.dumps(load), file=open('glossary.json', 'w', encoding="utf-8"))
                 break
         window.close()
         main()
@@ -126,6 +125,8 @@ def main():
     if not os.path.exists(DataSetRootTrad):
         os.mkdir(DataSetRootTrad)
     listDir = glob.glob(DataSetRoot+"/**/", recursive=True)
+    for key, Dir in enumerate(listDir):
+        listDir[key] = Dir.replace('\\','/')
     listDir.remove(DataSetRoot+'/')
     listDir.remove(DataSetRoot+'/EquipmentImages/')
     listDir.sort()
@@ -164,12 +165,14 @@ def main():
 
 def listFileXML(path, obj):
     listXml = glob.glob(path+"*.xml")
+    for key, Xml in enumerate(listXml):
+        listXml[key] = Xml.replace('\\','/')
     listXml.sort()
     for Xml in listXml:
         progress = 0
         trad = '0%'
         parent=''
-        if (len(Xml.split('/')) > 3):
+        if (len(Xml.split('/')) > 4):
             name = list(Xml.split('/'))[-1][:-4]
             parent = list(Xml.split('/'))[-2]
         else:
@@ -189,10 +192,10 @@ def openXML(filePath, progress = 0):
     global doc
     if progress != 0:
         tempFile = list(glob.glob(DataSetRootTrad+fileName+'*.inprogress'))[0]
-        with open(tempFile) as fd:
+        with open(tempFile, encoding="utf-8") as fd:
             doc = xmltodict.parse(fd.read())
     else:
-        with open(filePath) as fd:
+        with open(filePath, encoding="utf-8") as fd:
             doc = xmltodict.parse(fd.read())
             progress = 0
     masterKey = list(doc.keys())[0]
@@ -202,7 +205,7 @@ def openXML(filePath, progress = 0):
         displayOriginal(doc, fileName, progress)   
     else:
         displayOriginal(doc[masterKey], fileName, progress)
-    print(xmltodict.unparse(doc, pretty=True), file=open(DataSetRootTrad+fileName+'.xml', 'w'))
+    print(xmltodict.unparse(doc, pretty=True), file=open(DataSetRootTrad+fileName+'.xml', 'w', encoding="utf-8"))
     main()
 
 def displayOriginal(items, fileName, progress):
@@ -216,12 +219,12 @@ def displayOriginal(items, fileName, progress):
         sourceLayout = []
         editzoneLayout = []
         for source in getSources(item):
-            sourceLayout.append([sg.Text(source,pad=(20,10),font=('Raleway', 14,'italic'))])
+            sourceLayout.append([sg.Text(source,pad=(20,10),font=('Raleway', 12,'italic'))])
         for frame in getNameDesc(item):
             editzoneLayout.append(frame)
         if 'Abbrev' in item:
             Abbrev = sg.InputText(default_text=item['Abbrev'],key='Abbrev', size=(4,1),metadata=['Abbrev',item])
-            editzoneLayout.insert(1,[sg.Frame('Abbrev: ',[[sg.Text(item['Abbrev'],font=('Raleway', 14,'italic')),Abbrev]],font=('Raleway', 14,'bold'))])
+            editzoneLayout.insert(1,[sg.Frame('Abbrev: ',[[sg.Text(item['Abbrev'],font=('Raleway', 12,'italic')),Abbrev]],font=('Raleway', 12,'bold'))])
         if 'BaseMods' in item:
             if 'MiscDesc' in item['BaseMods']['Mod']:
                 item['BaseMods']['Mod'] = [item['BaseMods']['Mod']]
@@ -229,8 +232,8 @@ def displayOriginal(items, fileName, progress):
             for subItem in item['BaseMods']['Mod']:
                 if 'MiscDesc' in subItem:
                     Mod = sg.Multiline(default_text=subItem['MiscDesc'],key='MiscDesc', metadata=['MiscDesc',subItem],size=(59,4),pad=(10,10))
-                    modsTab.append([sg.Tab('Mod',[[sg.Frame('Description: ',[[sg.Multiline(default_text=subItem['MiscDesc'],text_color=sg.LOOK_AND_FEEL_TABLE[sg.theme()]['TEXT'],background_color=sg.LOOK_AND_FEEL_TABLE[sg.theme()]['BACKGROUND'],border_width=0,font=('Raleway', 14,'italic'),disabled=True,size=(59,6),pad=(10,10),key='Display_'), sg.Column([[Mod],[sg.Button('Trad',key='Trad_Description',metadata=Mod)]],element_justification='center')]],font=('Raleway', 12,'bold')) ]])])
-            editzoneLayout.append([sg.Frame('Mods',[[sg.TabGroup(modsTab,key='Display_')]],font=('Raleway', 14,'bold'))])
+                    modsTab.append([sg.Tab('Mod',[[sg.Frame('Description: ',[[sg.Multiline(default_text=subItem['MiscDesc'],text_color=sg.LOOK_AND_FEEL_TABLE[sg.theme()]['TEXT'],background_color=sg.LOOK_AND_FEEL_TABLE[sg.theme()]['BACKGROUND'],border_width=0,font=('Raleway', 12,'italic'),disabled=True,size=(59,6),pad=(10,10),key='Display_'), sg.Column([[Mod],[sg.Button('Trad',key='Trad_Description',metadata=Mod)]],element_justification='center')]],font=('Raleway', 12,'bold')) ]])])
+            editzoneLayout.append([sg.Frame('Mods',[[sg.TabGroup(modsTab,key='Display_')]],font=('Raleway', 12,'bold'))])
         optionsParseXML(item,editzoneLayout)
         if 'SubSpeciesList' in item:
             speciesLayout = []
@@ -248,12 +251,12 @@ def displayOriginal(items, fileName, progress):
                 speciesLayout.insert(0,[sg.Tab('Species',editzoneLayout)])
                 editzoneLayout = [[sg.TabGroup(speciesLayout,key='Display_')]]
         frameLayout = [
-                          [sg.Frame('Type',[[sg.Text(name,pad=(20,10),font=('Raleway', 14))]],pad=((16,0),0),font=('Raleway', 14,'bold')),sg.Frame('Source:',sourceLayout,pad=(14,0),font=('Raleway', 14,'bold'),key='sources'),sg.Frame('Progress: '+str(pos)+' of '+str(total),[[sg.ProgressBar(total,orientation='horizontal', size=(50,20), pad=(20,10),key='progbar')]],font=('Raleway', 14,'bold'))],
-                          [sg.Column([[sg.Column(editzoneLayout)]],size=(1550,800),vertical_alignment='top',vertical_scroll_only=True,scrollable=True,)]
+                          [sg.Frame('Type',[[sg.Text(name,pad=(20,10),font=('Raleway', 12))]],pad=((16,0),0),font=('Raleway', 12,'bold')),sg.Frame('Source:',sourceLayout,pad=(14,0),font=('Raleway', 12,'bold'),key='sources'),sg.Frame('Progress: '+str(pos)+' of '+str(total),[[sg.ProgressBar(total,orientation='horizontal', size=(50,20), pad=(20,10),key='progbar')]],font=('Raleway', 12,'bold'))],
+                          [sg.Column([[sg.Column(editzoneLayout)]],size=(1350,800),vertical_alignment='top',vertical_scroll_only=True,scrollable=True,)]
                          ]
-        buttonLayout = [[sg.Button('Next', pad=(10,(0,25)), button_color=['white','green'],font=('Raleway', 14), key='valid')],[sg.Button('Back', pad=(10,(0,25)),font=('Raleway', 12))]]
+        buttonLayout = [[sg.Button('Next', pad=(10,(0,25)), button_color=['white','green'],font=('Raleway', 12), key='valid')],[sg.Button('Back', pad=(10,(0,25)),font=('Raleway', 12))]]
         layout= [[sg.Column(frameLayout),sg.VerticalSeparator(),sg.Column(buttonLayout,vertical_alignment='top',element_justification='left')]]
-        window_edit = sg.Window('Edit Item : '+name, layout,size=(1700,900),font=('Raleway', 14),finalize=True)
+        window_edit = sg.Window('Edit Item : '+name, layout,size=(1920,1080),font=('Raleway', 12),finalize=True)
         window_trad = ''
         window_edit['progbar'].update(pos)
         if pos+1 == total:
@@ -261,7 +264,7 @@ def displayOriginal(items, fileName, progress):
         if pos > 0 :
             # Save Temp File
             tempFile = DataSetRootTrad+fileName+'.'+str(pos)+'.'+str(total)+'.inprogress'
-            print(xmltodict.unparse(doc, pretty=True), file=open(tempFile, 'w'))
+            print(xmltodict.unparse(doc, pretty=True), file=open(tempFile, 'w', encoding="utf-8"))
         while True:  # Event Loop
             window, event, values = sg.read_all_windows()
             if window == window_edit:
@@ -285,7 +288,7 @@ def displayOriginal(items, fileName, progress):
                         tradItems =[]
                         tradLayout =[]
                         for trad in trads:
-                            tradItems.append([sg.Column([[sg.Multiline(default_text=trad,size=(30,18),text_color=sg.LOOK_AND_FEEL_TABLE[sg.theme()]['TEXT'],background_color=sg.LOOK_AND_FEEL_TABLE[sg.theme()]['BACKGROUND'],border_width=0,font=('Raleway', 14,'italic'),disabled=True,pad=(10,10),key='Txt_Trad')], [sg.Button('Select',metadata=trad)]],element_justification='center'), sg.VerticalSeparator()])
+                            tradItems.append([sg.Column([[sg.Multiline(default_text=trad,size=(30,18),text_color=sg.LOOK_AND_FEEL_TABLE[sg.theme()]['TEXT'],background_color=sg.LOOK_AND_FEEL_TABLE[sg.theme()]['BACKGROUND'],border_width=0,font=('Raleway', 12,'italic'),disabled=True,pad=(10,10),key='Txt_Trad')], [sg.Button('Select',metadata=trad)]],element_justification='center'), sg.VerticalSeparator()])
                         tradItems.append([sg.Button('Back')])
                         for tradItem in tradItems:
                             tradLayout.append(sg.Column([tradItem]))
@@ -332,11 +335,11 @@ def parseSource(elem):
 
 def getNameDesc(subItems):
     Name = sg.InputText(default_text=subItems['Name'],key='Name', metadata=['Name',subItems])
-    layout = [[sg.Frame('Name: ',[[sg.Text(subItems['Name'],font=('Raleway', 14,'italic')),Name,sg.Button('Trad',key="Trad_Name",metadata=Name,pad=(10,10))]],font=('Raleway', 14,'bold'),pad=(6,10))], ]
+    layout = [[sg.Frame('Name: ',[[sg.Text(subItems['Name'],font=('Raleway', 12,'italic')),Name,sg.Button('Trad',key="Trad_Name",metadata=Name,pad=(10,10))]],font=('Raleway', 12,'bold'),pad=(6,10))], ]
     if 'Description' in subItems:
         if subItems['Description'] is not None:
             Description =  sg.Multiline(default_text=subItems['Description'],key='Description', metadata=['Description',subItems],size=(65,20),pad=(10,10))
-            layout.append([sg.Frame('Description: ',[[sg.Multiline(default_text=subItems['Description'],text_color=sg.LOOK_AND_FEEL_TABLE[sg.theme()]['TEXT'],background_color=sg.LOOK_AND_FEEL_TABLE[sg.theme()]['BACKGROUND'],border_width=0,font=('Raleway', 14,'italic'),disabled=True,size=(65,22),pad=(10,10),key='Display_'),sg.Column([[Description],[sg.Button('Trad',key='Trad_Description',metadata=Description)]],element_justification='center')]],pad=(6,10),font=('Raleway', 14,'bold'))])
+            layout.append([sg.Frame('Description: ',[[sg.Multiline(default_text=subItems['Description'],text_color=sg.LOOK_AND_FEEL_TABLE[sg.theme()]['TEXT'],background_color=sg.LOOK_AND_FEEL_TABLE[sg.theme()]['BACKGROUND'],border_width=0,font=('Raleway', 12,'italic'),disabled=True,size=(65,22),pad=(10,10),key='Display_'),sg.Column([[Description],[sg.Button('Trad',key='Trad_Description',metadata=Description)]],element_justification='center')]],pad=(6,10),font=('Raleway', 12,'bold'))])
     return layout
 
 def optionsParseXML(subItems,layout):
@@ -359,7 +362,7 @@ def optionsParseXML(subItems,layout):
                             listOptions.append([sg.Frame('',bloc)])
                 if 'Name' in subItems:
                     nameOpt = subItems['Name']
-                    listOptions.insert(0,[sg.Frame('Option Name: ',[[sg.Text(subItems['Name'],font=('Raleway', 14,'italic')),sg.InputText(default_text=subItems['Name'],key='Name', metadata=['Name',subItems])]],font=('Raleway', 12,'bold'),pad=(6,10))])
+                    listOptions.insert(0,[sg.Frame('Option Name: ',[[sg.Text(subItems['Name'],font=('Raleway', 12,'italic')),sg.InputText(default_text=subItems['Name'],key='Name', metadata=['Name',subItems])]],font=('Raleway', 12,'bold'),pad=(6,10))])
                 optionsTab.append([sg.Tab(nameOpt,listOptions)])
     if 'Options' in subItems:
         if 'Option' in subItems['Options']:
@@ -371,7 +374,7 @@ def optionsParseXML(subItems,layout):
                     bloc.append(frame)
                 optionsTab.append([sg.Tab('_Option_',bloc   )])
     if len(optionsTab):
-        layout.append([sg.Frame('Options',[[sg.TabGroup(optionsTab,key='Display_')]],font=('Raleway', 14,'bold'))])
+        layout.append([sg.Frame('Options',[[sg.TabGroup(optionsTab,key='Display_')]],font=('Raleway', 12,'bold'))])
 
 def tradChoice(string):
     strTrad = []
